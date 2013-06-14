@@ -122,20 +122,13 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet static
 pre-up ifconfig eth0 hw ether b8:ac:6f:9a:ee:e4
-        address 192.168.139.50
+        address 10.180.85.239
         netmask 255.255.255.0
-        network 192.168.139.0
-        broadcast 192.168.139.255
-        gateway 192.168.139.253
-        dns-nameservers 210.72.128.8
+        network 10.180.85.0
+        broadcast 10.180.85.255
+        gateway 10.180.85.254
+        dns-nameservers 10.180.0.1
 
-auto eth1
-iface eth1 inet static
-pre-up ifconfig eth1 hw ether b8:ac:6f:9a:ee:e4
-        address 10.0.0.1
-        netmask 255.255.255.0
-        network 10.0.0.0
-        broadcast 10.0.0.255
 INTERFACES
         /etc/init.d/networking restart
 fi
@@ -408,7 +401,7 @@ cat <<NOVAconf > /etc/nova/nova.conf
 # network specific settings
 --network_manager=nova.network.manager.FlatDHCPManager
 --public_interface=eth0
---flat_interface=eth1
+--flat_interface=eth0
 --flat_network_bridge=br100
 --fixed_range=10.0.0.1/27
 --floating_range=192.168.139.225/27 
