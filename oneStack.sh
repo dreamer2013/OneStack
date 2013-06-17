@@ -45,18 +45,18 @@ GLANCE_DB_PASSWD=${GLANCE_DB_PASSWD:-"cloud1234"}
 ## 注意：单网卡的去掉interfaces的eth1，并把nova.conf里面eth1改完eth0即可！
 ## 自行检查下面network/interfaces的两个网卡设置
 ## 本机器外网ip （包括局域网的内网ip，相对于OpenStack内网而言的）
-OUT_IP="192.168.139.50"
-OUT_IP_PRE="192.168.139"
+OUT_IP="10.180.85.239"
+OUT_IP_PRE="10.180.85"
 ## nova-network内网ip
 IN_IP="10.0.0.1"
 IN_IP_PRE="10.0.0"
 ## flat的起始ip
 FLAT_IP="10.0.0.40"
 ## 浮动ip的起始值
-FLOAT_IP="192.168.139.225"
+FLOAT_IP="10.180.85.160"
 
 ## 选择虚拟技术，裸机使用kvm，虚拟机里面使用qemu
-VIRT_TYPE="qemu"
+VIRT_TYPE="kvm"
 ## token, 登录dashboard密码（用户名admin）
 ADMIN_TOKEN="admin"
 ##########################################################################
