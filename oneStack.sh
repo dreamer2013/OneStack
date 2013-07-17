@@ -45,7 +45,7 @@ GLANCE_DB_PASSWD=${GLANCE_DB_PASSWD:-"cloud1234"}
 ## 注意：单网卡的去掉interfaces的eth1，并把nova.conf里面eth1改完eth0即可！
 ## 自行检查下面network/interfaces的两个网卡设置
 ## 本机器外网ip （包括局域网的内网ip，相对于OpenStack内网而言的）
-OUT_IP="10.180.85.239"
+OUT_IP="10.180.85.161"
 OUT_IP_PRE="10.180.85"
 ## nova-network内网ip
 IN_IP="10.0.0.1"
@@ -53,10 +53,10 @@ IN_IP_PRE="10.0.0"
 ## flat的起始ip
 FLAT_IP="10.0.0.40"
 ## 浮动ip的起始值
-FLOAT_IP="10.180.85.160"
+FLOAT_IP="10.180.85.175"
 
 ## 选择虚拟技术，裸机使用kvm，虚拟机里面使用qemu
-VIRT_TYPE="kvm"
+VIRT_TYPE="qemu"
 ## token, 登录dashboard密码（用户名admin）
 ADMIN_TOKEN="admin"
 ##########################################################################
@@ -64,22 +64,7 @@ ADMIN_TOKEN="admin"
 # Determine what system we are running on.  This provides ``os_VENDOR``...
 # Determine OS Vendor, Release and Update 
 #if [[ -x "`which lsb_release 2>/dev/null`" ]]; then
-    os_VENDOR=$(lsb_release -i -s)
-    os_RELEASE=$(lsb_release -r -s)
-    os_UPDATE=""
-    os_CODENAME=$(lsb_release -c -s)
-#fi
-if [ "Ubuntu" = "$os_VENDOR" ]; then
-    DISTRO=$os_CODENAME
-else
-    echo "The os didn't seems to be Ubuntu."
-    exit 1
-fi
-echo $DISTRO
-if [ "precise" != ${DISTRO} -a "oneiric" != ${DISTRO} ]; then
-    echo "WARNING: this script has been tested on oneiric or precise"
-    exit 1
-fi
+
 
 ############################################################################
 ## 3）以下系统配置，语言中文支持、国内APT源、网络设置（两个网卡），可以自行配置，注释掉这些步骤。
@@ -122,7 +107,7 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet static
 pre-up ifconfig eth0 hw ether b8:ac:6f:9a:ee:e4
-        address 10.180.85.239
+        address 10.180.85.161
         netmask 255.255.255.0
         network 10.180.85.0
         broadcast 10.180.85.255
@@ -374,37 +359,37 @@ cat <<NOVAconf > /etc/nova/nova.conf
 --use_deprecated_auth=false
 --auth_strategy=keystone
 --scheduler_driver=nova.scheduler.simple.SimpleScheduler
---s3_host=192.168.139.50
---ec2_host=192.168.139.50
---rabbit_host=192.168.139.50
---cc_host=192.168.139.50
---nova_url=http://192.168.139.50:8774/v1.1/
---routing_source_ip=192.168.139.50
---glance_api_servers=192.168.139.50:9292
+--s3_host=10.180.85.161
+--ec2_host=10.180.85.161
+--rabbit_host=10.180.85.161
+--cc_host=10.180.85.161
+--nova_url=http://10.180.85.161:8774/v1.1/
+--routing_source_ip=10.180.85.161
+--glance_api_servers=10.180.85.161:9292
 --image_service=nova.image.glance.GlanceImageService
 --iscsi_ip_prefix=10.0.0
---sql_connection=mysql://novadbadmin:cloud1234@192.168.139.50/nova
---ec2_url=http://192.168.139.50:8773/services/Cloud
---keystone_ec2_url=http://192.168.139.50:5000/v2.0/ec2tokens
+--sql_connection=mysql://novadbadmin:cloud1234@10.180.85.161/nova
+--ec2_url=http://10.180.85.161:8773/services/Cloud
+--keystone_ec2_url=http://10.180.85.161:5000/v2.0/ec2tokens
 --api_paste_config=/etc/nova/api-paste.ini
---libvirt_type=kvm
+--libvirt_type=qemu
 --libvirt_use_virtio_for_bridges=true
 --start_guests_on_host_boot=true
 --resume_guests_state_on_host_boot=true
  
 #novnc
 --novnc_enabled=true
---novncproxy_base_url= http://192.168.139.50:6080/vnc_auto.html
+--novncproxy_base_url= http://10.180.85.161:6080/vnc_auto.html
 --vncserver_proxyclient_address=127.0.0.1
 --vncserver_listen=127.0.0.1
 
 # network specific settings
 --network_manager=nova.network.manager.FlatDHCPManager
 --public_interface=eth0
---flat_interface=eth0
+--flat_interface=eth1
 --flat_network_bridge=br100
 --fixed_range=10.0.0.1/27
---floating_range=192.168.139.225/27 
+--floating_range=10.180.85.175/27 
 --network_size=32
 --flat_network_dhcp_start=10.0.0.40
 --flat_injected=False
@@ -420,7 +405,7 @@ NOVAconf
 ## fi
 
 sed -i -e "s/novadbadmin/$NOVA_DB_USERNAME/g;s/cloud1234/$NOVA_DB_PASSWD/g" /etc/nova/nova.conf
-sed -i -e "s/192.168.139.50/$OUT_IP/g;s/192.168.139.225/$FLOAT_IP/g;" /etc/nova/nova.conf
+sed -i -e "s/10.180.85.161/$OUT_IP/g;s/10.180.85.175/$FLOAT_IP/g;" /etc/nova/nova.conf
 sed -i -e "s/10.0.0.1/$IN_IP/g;s/10.0.0.40/$FLAT_IP/g;s/10.0.0/$IN_IP_PRE/g;" /etc/nova/nova.conf
 ## kvm or qemu?
 sed -i -e "s/kvm/$VIRT_TYPE/g" /etc/nova/nova.conf
@@ -469,7 +454,7 @@ nova-manage db sync
 nova-manage network create private --fixed_range_v4=10.0.0.1/27 --num_networks=1 --bridge=br100 --bridge_interface=eth1 --network_size=32
 
 ## 设定floating IP
-nova-manage floating create --ip_range=192.168.139.225/27
+nova-manage floating create --ip_range=10.180.85.175/27
 
 ## 设置权限
 chown -R nova:nova /etc/nova
@@ -531,7 +516,7 @@ nova show cloud01
 ## 八、完成安装部署
 cat <<EOF >&1
  1. login the dashboard
-   http://192.168.139.50
+   http://10.180.85.161
    user:admin
    pass:admin or $ADMIN_TOKEN
  2. login a instance("cloud01")
